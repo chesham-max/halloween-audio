@@ -1,0 +1,31 @@
+name: Publish Halloween audio
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - name: Prepare public audio
+        run: |
+          mkdir public
+          curl --fail --location --retry 3 --output public/Halloween_Carport_30min.mp3 https://github.com/chesham-max/halloween-audio/releases/download/v1.0.0/Halloween_Carport_30min.mp3
+          echo 'cf4f4e31196175adaa0f9c1f3fc8c669753041c9f4329fb6cd258c9ff3c52ccb  public/Halloween_Carport_30min.mp3' | sha256sum --check
+          printf '<!doctype html><title>Halloween Audio</title><h1>Halloween Carport</h1><audio controls src="Halloween_Carport_30min.mp3"></audio><p>30-minute mix. Tracks: Tunetank - Sneaky Halloween; Tunetank - Halloween Carnival Music; Top Flow - Haunted Carnival. Original licenses apply.</p>' > public/index.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - uses: actions/deploy-pages@v5
+        id: deployment
